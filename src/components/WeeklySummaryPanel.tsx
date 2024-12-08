@@ -46,7 +46,7 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
 
   return (
     <div className="relative">
-      <h3 className="text-xl font-medium text-gray-300 mb-6 text-center">This Week's Summary</h3>
+      <h3 className="text-lg font-medium text-gray-300 mb-4 text-center">This Week's Summary</h3>
       
       <div className="relative overflow-hidden">
         <AnimatePresence initial={false} mode="wait">
