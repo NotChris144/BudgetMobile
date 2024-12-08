@@ -33,16 +33,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     [transactions, baseDailyBudget, currentDate]
   );
 
-  // Find the week containing today's date
-  const currentWeek = weeks.find(week => 
-    week.summary.some(day => day.isToday)
-  ) || weeks[0];
-
-  // Get today's summary from the current week
-  const todaysSummary = currentWeek?.summary.find(day => day.isToday);
-  const displayBudget = todaysSummary?.adjustedBudget ?? baseDailyBudget;
+  // Find today's summary
+  const todaysSummary = weeks[0]?.summary.find(day => day.isToday);
+  
+  // Get the adjusted budget for today
+  const displayBudget = todaysSummary?.remainingToday ?? baseDailyBudget;
   const todaysSpent = todaysSummary?.spent ?? 0;
-  const budgetDifference = displayBudget - baseDailyBudget;
+  const budgetDifference = (todaysSummary?.adjustedBudget ?? baseDailyBudget) - baseDailyBudget;
 
   return (
     <div className="home-content">
@@ -60,7 +57,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <h2 className="budget-title">Your Daily Budget</h2>
         <div className="flex items-baseline justify-center gap-2">
           <p className="budget-amount">
-            {formatCurrency(displayBudget)}
+            {formatCurrency(Math.max(0, displayBudget))}
           </p>
           {budgetDifference !== 0 && (
             <div className={`flex items-center text-sm ${budgetDifference > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
