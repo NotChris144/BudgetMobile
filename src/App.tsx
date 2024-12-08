@@ -171,7 +171,7 @@ function App() {
               onClick={() => setShowAddTransaction(true)}
               className="nav-item-center"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
                 <Plus className="h-6 w-6 text-white" />
               </div>
             </button>
