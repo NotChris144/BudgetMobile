@@ -15,15 +15,48 @@ interface WeeklySummaryPanelProps {
   }[];
 }
 
+const WeekIndicator: React.FC<{ 
+  totalWeeks: number; 
+  currentWeek: number;
+  onClick?: (index: number) => void;
+}> = ({ totalWeeks, currentWeek, onClick }) => {
+  return (
+    <div className="flex justify-center items-center space-x-2 mt-4">
+      {Array.from({ length: totalWeeks }, (_, i) => (
+        <motion.button
+          key={i}
+          onClick={() => onClick?.(i)}
+          className={`rounded-full bg-gray-600 transition-all duration-200
+            ${currentWeek === i ? 'bg-purple-500' : 'hover:bg-gray-500'}`}
+          initial={false}
+          animate={{
+            width: currentWeek === i ? '12px' : '8px',
+            height: currentWeek === i ? '12px' : '8px',
+            opacity: currentWeek === i ? 1 : 0.5
+          }}
+          whileTap={{ scale: 0.9 }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
 
+  // Filter weeks that should be shown (first week and weeks that can be accessed)
+  const accessibleWeeks = weeks.reduce((acc, week, index) => {
+    if (index === 0 || (index > 0 && weeks[index - 1].shouldShowNext)) {
+      acc.push(week);
+    }
+    return acc;
+  }, [] as typeof weeks);
+
   const handleDragEnd = (e: any, { offset, velocity }: PanInfo) => {
     const swipe = Math.abs(offset.x) * velocity.x;
-    const currentWeekData = weeks[currentWeek];
 
-    if (swipe < -100 && currentWeek < weeks.length - 1 && currentWeekData.shouldShowNext) {
+    if (swipe < -100 && currentWeek < accessibleWeeks.length - 1) {
       setCurrentWeek(current => current + 1);
     } else if (swipe > 100 && currentWeek > 0) {
       setCurrentWeek(current => current - 1);
@@ -34,15 +67,7 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
     setDragDirection(offset.x > 0 ? 'right' : 'left');
   };
 
-  if (weeks.length === 0) return null;
-
-  // Only show pagination dots for weeks that should be visible
-  const visibleWeeks = weeks.reduce((acc, week, index) => {
-    if (index === 0 || weeks[index - 1].shouldShowNext) {
-      acc.push(week);
-    }
-    return acc;
-  }, [] as typeof weeks);
+  if (accessibleWeeks.length === 0) return null;
 
   return (
     <div className="relative">
@@ -79,19 +104,19 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
             {/* Week Header */}
             <div className="px-6 py-3 border-b border-gray-700/30 flex justify-between items-center">
               <span className="text-sm text-gray-400">
-                {weeks[currentWeek].weekStartDate.toLocaleDateString('en-US', { 
+                {accessibleWeeks[currentWeek].weekStartDate.toLocaleDateString('en-US', { 
                   month: 'long',
                   day: 'numeric'
                 })}
               </span>
               <span className="text-sm text-purple-400 font-medium">
-                Week {weeks[currentWeek].weekNumber}
+                Week {accessibleWeeks[currentWeek].weekNumber}
               </span>
             </div>
 
             {/* Days */}
             <div className="divide-y divide-gray-700/30">
-              {weeks[currentWeek].summary.map((day, index) => {
+              {accessibleWeeks[currentWeek].summary.map((day, index) => {
                 const hasTransactions = day.spent > 0;
                 
                 return (
@@ -124,13 +149,15 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
                 <div>
                   <div className="text-gray-400 mb-1">Total</div>
                   <div className="text-lg font-medium text-gray-200">
-                    {formatCurrency(weeks[currentWeek].totalSpent)}
+                    {formatCurrency(accessibleWeeks[currentWeek].totalSpent)}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-gray-400 mb-1">Leftover</div>
-                  <div className={`text-lg font-medium ${weeks[currentWeek].todaysRemaining >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {formatCurrency(weeks[currentWeek].todaysRemaining)}
+                  <div className={`text-lg font-medium ${
+                    accessibleWeeks[currentWeek].todaysRemaining >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {formatCurrency(accessibleWeeks[currentWeek].todaysRemaining)}
                   </div>
                 </div>
               </div>
@@ -139,22 +166,13 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
         </AnimatePresence>
       </div>
 
-      {/* Pagination Dots */}
-      {visibleWeeks.length > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          {visibleWeeks.map((week, index) => (
-            <button
-              key={`week-${week.weekNumber}`}
-              onClick={() => setCurrentWeek(index)}
-              className={`transition-all duration-200 rounded-full 
-                ${currentWeek === index 
-                  ? 'w-3 h-3 bg-purple-500' 
-                  : 'w-2 h-2 bg-gray-600 hover:bg-gray-500'
-                }`}
-              aria-label={`Week ${week.weekNumber}`}
-            />
-          ))}
-        </div>
+      {/* Week Indicator Dots */}
+      {accessibleWeeks.length > 1 && (
+        <WeekIndicator
+          totalWeeks={accessibleWeeks.length}
+          currentWeek={currentWeek}
+          onClick={setCurrentWeek}
+        />
       )}
     </div>
   );

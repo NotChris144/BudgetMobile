@@ -1,124 +1,96 @@
 import { Transaction } from '../types';
 
 export interface DaySummary {
+  date: Date;
   day: string;
-  date: string;
   spent: number;
-  adjustedBudget: number;
   remainingToday: number;
   isToday: boolean;
 }
 
-export const getWeekStartDate = (date: Date): Date => {
+export function getStartOfWeek(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  const diff = d.getDate() - day;
   d.setDate(diff);
-  d.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+  d.setHours(0, 0, 0, 0);
   return d;
-};
+}
 
-export const calculateWeeklySummaries = (
+export function calculateWeeklySummaries(
   transactions: Transaction[],
-  baseDailyBudget: number,
-  currentDate: Date,
-  numberOfWeeks: number = 4
-): {
-  summary: DaySummary[];
-  totalSpent: number;
-  todaysRemaining: number;
-  weekStartDate: Date;
-  weekNumber: number;
-  hasTransactions: boolean;
-  shouldShowNext: boolean;
-}[] => {
-  const weeks = [];
-  let rollover = 0;
-  const safeBaseDailyBudget = isNaN(baseDailyBudget) ? 0 : baseDailyBudget;
-
+  dailyBudget: number,
+  currentDate: Date = new Date()
+) {
   // Sort transactions by date
-  const sortedTransactions = [...transactions].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  for (let weekOffset = 0; weekOffset < numberOfWeeks; weekOffset++) {
-    const weekDate = new Date(currentDate);
-    weekDate.setDate(weekDate.getDate() - (weekOffset * 7));
-    const startOfWeek = getWeekStartDate(weekDate);
+  const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
+  // Group transactions by week
+  const weeklyTransactions = new Map<string, Transaction[]>();
+  
+  sortedTransactions.forEach(transaction => {
+    const weekStart = getStartOfWeek(new Date(transaction.date));
+    const weekKey = weekStart.toISOString();
     
-    const summary: DaySummary[] = [];
-    let weekTotalSpent = 0;
-    let weekRemainingToday = 0;
-    let hasTransactionsInWeek = false;
-    let daysWithTransactions = new Set<string>();
+    if (!weeklyTransactions.has(weekKey)) {
+      weeklyTransactions.set(weekKey, []);
+    }
+    weeklyTransactions.get(weekKey)!.push(transaction);
+  });
 
-    // Calculate daily summaries for the week (Monday to Sunday)
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(
-        startOfWeek.getFullYear(),
-        startOfWeek.getMonth(),
-        startOfWeek.getDate() + i
-      );
-      const dateStr = date.toISOString().split('T')[0];
-      const isToday = dateStr === currentDate.toISOString().split('T')[0];
+  // Calculate summaries for each week
+  const weeklySummaries = Array.from(weeklyTransactions.entries()).map(([weekKey, transactions], index) => {
+    const weekStartDate = new Date(weekKey);
+    const weekSummary = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(weekStartDate);
+      date.setDate(date.getDate() + i);
       
       // Get transactions for this day
-      const dayTransactions = sortedTransactions.filter(t => t.date === dateStr);
+      const dayTransactions = transactions.filter(t => 
+        new Date(t.date).getDate() === date.getDate() &&
+        new Date(t.date).getMonth() === date.getMonth() &&
+        new Date(t.date).getFullYear() === date.getFullYear()
+      );
+      
       const spent = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
+      const remainingToday = dailyBudget - spent;
+      const isToday = date.toDateString() === currentDate.toDateString();
       
-      if (spent > 0) {
-        hasTransactionsInWeek = true;
-        daysWithTransactions.add(dateStr);
-      }
-      
-      weekTotalSpent += spent;
-      
-      // Calculate adjusted budget including rollover from previous day
-      const adjustedBudget = safeBaseDailyBudget + rollover;
-      
-      // Calculate remaining amount for today
-      const remainingToday = adjustedBudget - spent;
-      
-      if (isToday) {
-        weekRemainingToday = remainingToday;
-      }
-      
-      summary.push({
-        day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-        date: dateStr,
+      return {
+        date,
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
         spent,
-        adjustedBudget: isToday ? adjustedBudget : safeBaseDailyBudget,
         remainingToday,
         isToday
-      });
+      };
+    });
 
-      // Update rollover for the next day
-      if (dateStr < currentDate.toISOString().split('T')[0]) {
-        rollover = remainingToday;
-      }
-    }
+    const totalSpent = weekSummary.reduce((sum, day) => sum + day.spent, 0);
+    const todaysRemaining = dailyBudget * 7 - totalSpent;
+    const hasTransactions = weekSummary.some(day => day.spent > 0);
+    
+    // Determine if we should show next week
+    const isCurrentWeek = weekStartDate <= currentDate && 
+      new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000) > currentDate;
+    
+    const allDaysHaveTransactions = weekSummary.every(day => day.spent > 0);
+    const isSunday = currentDate.getDay() === 0;
+    
+    // Show next week if:
+    // 1. All days in current week have transactions OR
+    // 2. It's Sunday and we're in the current week
+    const shouldShowNext = isCurrentWeek && (allDaysHaveTransactions || isSunday);
 
-    // Determine if we should show the next week
-    const today = new Date(currentDate);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 6); // Get to Sunday
-    const isEndOfWeek = today >= endOfWeek;
-    const hasAllDaysWithTransactions = daysWithTransactions.size === 7;
-    const shouldShowNext = isEndOfWeek || hasAllDaysWithTransactions;
+    return {
+      summary: weekSummary,
+      totalSpent,
+      todaysRemaining,
+      weekStartDate,
+      weekNumber: index + 1,
+      hasTransactions,
+      shouldShowNext
+    };
+  });
 
-    // Only add weeks that have transactions or if it's the current week
-    if (hasTransactionsInWeek || weekOffset === 0) {
-      weeks.push({
-        summary,
-        totalSpent: weekTotalSpent,
-        todaysRemaining: weekRemainingToday,
-        weekStartDate: startOfWeek,
-        weekNumber: weekOffset + 1,
-        hasTransactions: hasTransactionsInWeek,
-        shouldShowNext
-      });
-    }
-  }
-
-  return weeks;
-};
+  return weeklySummaries;
+}
