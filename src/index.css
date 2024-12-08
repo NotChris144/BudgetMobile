@@ -131,15 +131,15 @@
   }
 
   .welcome-section {
-    @apply pt-4 pb-6;
+    @apply pt-2 pb-4;
   }
 
   .budget-section {
-    @apply text-center mb-4;
+    @apply text-center mb-3;
   }
 
   .budget-title {
-    @apply text-2xl font-medium text-gray-300 mb-4;
+    @apply text-2xl font-medium text-gray-300 mb-3;
   }
 
   .budget-amount {
@@ -152,7 +152,7 @@
   }
 
   .summary-title {
-    @apply text-lg font-medium text-gray-300 mb-4 text-center;
+    @apply text-lg font-medium text-gray-300 mb-3 text-center;
   }
 
   .btn-primary {

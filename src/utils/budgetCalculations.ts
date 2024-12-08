@@ -99,9 +99,12 @@ export const calculateWeeklySummaries = (
     }
 
     // Determine if we should show the next week
-    const isSunday = new Date(currentDate).getDay() === 0;
+    const today = new Date(currentDate);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6); // Get to Sunday
+    const isEndOfWeek = today >= endOfWeek;
     const hasAllDaysWithTransactions = daysWithTransactions.size === 7;
-    const shouldShowNext = isSunday || hasAllDaysWithTransactions;
+    const shouldShowNext = isEndOfWeek || hasAllDaysWithTransactions;
 
     // Only add weeks that have transactions or if it's the current week
     if (hasTransactionsInWeek || weekOffset === 0) {
