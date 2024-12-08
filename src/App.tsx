@@ -124,9 +124,35 @@ function App() {
   return (
     <div className="flex h-full flex-col">
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-16">
-        {activeScreen === 'home' && <HomeScreen appData={appData} />}
-        {activeScreen === 'expenses' && <ExpensesScreen expenses={appData.expenses} addExpense={addExpense} removeExpense={removeExpense} />}
-        {activeScreen === 'settings' && <SettingsScreen appData={appData} updateSettings={updateSettings} />}
+        {activeScreen === 'home' && (
+          <HomeScreen
+            dailyBudget={appData.dailyBudget}
+            transactions={appData.transactions}
+            addTransaction={addTransaction}
+            removeTransaction={removeTransaction}
+            username={appData.username}
+            currentDate={virtualDate}
+            setCurrentDate={setVirtualDate}
+            onAddTransaction={() => setShowAddTransaction(true)}
+          />
+        )}
+        {activeScreen === 'expenses' && (
+          <ExpensesScreen
+            expenses={appData.expenses}
+            income={appData.income}
+            addExpense={addExpense}
+            removeExpense={removeExpense}
+          />
+        )}
+        {activeScreen === 'settings' && (
+          <SettingsScreen
+            income={appData.income}
+            dailyBudget={appData.dailyBudget}
+            updateSettings={updateSettings}
+            totalExpenses={appData.expenses.reduce((sum, exp) => sum + exp.amount, 0)}
+            username={appData.username}
+          />
+        )}
       </main>
 
       {/* Navigation Bar - Fixed to bottom with safe area padding */}
