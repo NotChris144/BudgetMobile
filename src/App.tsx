@@ -124,60 +124,47 @@ function App() {
   return (
     <div className="flex h-full flex-col">
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-16">
-        {activeScreen === 'home' && (
-          <HomeScreen
-            dailyBudget={appData.dailyBudget}
-            transactions={appData.transactions}
-            addTransaction={addTransaction}
-            removeTransaction={removeTransaction}
-            username={appData.username}
-            currentDate={virtualDate}
-            setCurrentDate={setVirtualDate}
-            onAddTransaction={() => setShowAddTransaction(true)}
-          />
-        )}
-        {activeScreen === 'expenses' && (
-          <ExpensesScreen
-            expenses={appData.expenses}
-            income={appData.income}
-            addExpense={addExpense}
-            removeExpense={removeExpense}
-          />
-        )}
-        {activeScreen === 'settings' && (
-          <SettingsScreen
-            income={appData.income}
-            dailyBudget={appData.dailyBudget}
-            updateSettings={updateSettings}
-            totalExpenses={appData.expenses.reduce((sum, exp) => sum + exp.amount, 0)}
-            username={appData.username}
-          />
-        )}
+        {activeScreen === 'home' && <HomeScreen appData={appData} />}
+        {activeScreen === 'expenses' && <ExpensesScreen expenses={appData.expenses} addExpense={addExpense} removeExpense={removeExpense} />}
+        {activeScreen === 'settings' && <SettingsScreen appData={appData} updateSettings={updateSettings} />}
       </main>
 
       {/* Navigation Bar - Fixed to bottom with safe area padding */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 safe-bottom">
-        <div className="flex items-center justify-around border-t border-gray-800 px-2 py-2">
-          <button
-            onClick={() => setActiveScreen('home')}
-            className={`flex flex-col items-center p-2 ${activeScreen === 'home' ? 'text-blue-500' : 'text-gray-400'}`}
-          >
-            <Home size={24} />
-            <span className="text-xs">Home</span>
-          </button>
+        <div className="mx-auto flex max-w-md items-center justify-between px-4">
           <button
             onClick={() => setActiveScreen('expenses')}
-            className={`flex flex-col items-center p-2 ${activeScreen === 'expenses' ? 'text-blue-500' : 'text-gray-400'}`}
+            className={`nav-item ${activeScreen === 'expenses' ? 'text-blue-500' : 'text-gray-400'}`}
           >
-            <DollarSign size={24} />
-            <span className="text-xs">Expenses</span>
+            <DollarSign className="h-6 w-6" />
+            <span className="mt-1 text-xs">Expenses</span>
           </button>
+
+          {activeScreen === 'home' ? (
+            <button
+              onClick={() => setShowAddTransaction(true)}
+              className="nav-item-center"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500">
+                <Plus className="h-6 w-6 text-white" />
+              </div>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveScreen('home')}
+              className={`nav-item ${activeScreen === 'home' ? 'text-blue-500' : 'text-gray-400'}`}
+            >
+              <Home className="h-6 w-6" />
+              <span className="mt-1 text-xs">Home</span>
+            </button>
+          )}
+
           <button
             onClick={() => setActiveScreen('settings')}
-            className={`flex flex-col items-center p-2 ${activeScreen === 'settings' ? 'text-blue-500' : 'text-gray-400'}`}
+            className={`nav-item ${activeScreen === 'settings' ? 'text-blue-500' : 'text-gray-400'}`}
           >
-            <User size={24} />
-            <span className="text-xs">Settings</span>
+            <User className="h-6 w-6" />
+            <span className="mt-1 text-xs">Profile</span>
           </button>
         </div>
       </nav>
