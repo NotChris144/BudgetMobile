@@ -45,13 +45,35 @@ const WeeklySummaryPanel: React.FC<WeeklySummaryPanelProps> = ({ weeks }) => {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
 
-  // Filter weeks that should be shown (first week and weeks that can be accessed)
-  const accessibleWeeks = weeks.reduce((acc, week, index) => {
-    if (index === 0 || (index > 0 && weeks[index - 1].shouldShowNext)) {
-      acc.push(week);
-    }
-    return acc;
-  }, [] as typeof weeks);
+  // Always include the first week and create next week if current week says shouldShowNext
+  const accessibleWeeks = [...weeks];
+  if (weeks.length > 0 && weeks[0].shouldShowNext) {
+    const nextWeekStart = new Date(weeks[0].weekStartDate);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+    
+    accessibleWeeks.push({
+      summary: Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(nextWeekStart);
+        date.setDate(date.getDate() + i);
+        const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const dayIndex = (date.getDay() + 6) % 7;
+        
+        return {
+          date,
+          day: dayNames[dayIndex],
+          spent: 0,
+          remainingToday: weeks[0].summary[0].remainingToday,
+          isToday: false
+        };
+      }),
+      totalSpent: 0,
+      todaysRemaining: weeks[0].summary[0].remainingToday * 7,
+      weekStartDate: nextWeekStart,
+      weekNumber: weeks[0].weekNumber + 1,
+      hasTransactions: false,
+      shouldShowNext: false
+    });
+  }
 
   const handleDragEnd = (e: any, { offset, velocity }: PanInfo) => {
     const swipe = Math.abs(offset.x) * velocity.x;
