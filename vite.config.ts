@@ -51,5 +51,10 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  build: {
+    commonjsOptions: {
+      include: [/date-fns/]
+    }
+  }
 });
