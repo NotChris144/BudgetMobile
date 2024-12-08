@@ -42,15 +42,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="home-content">
-      <DevModeMenu
-        transactions={transactions}
-        removeTransaction={removeTransaction}
-        setCurrentDate={setCurrentDate}
-        currentDate={currentDate}
-      />
-      
-      <div className="welcome-section">
+      <div className="welcome-section flex justify-between items-center">
         <WelcomeMessage username={username} />
+        <DevModeMenu
+          transactions={transactions}
+          removeTransaction={removeTransaction}
+          setCurrentDate={setCurrentDate}
+          currentDate={currentDate}
+        />
       </div>
 
       <div className="budget-section">

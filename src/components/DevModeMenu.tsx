@@ -28,7 +28,7 @@ const DevModeMenu: React.FC<DevModeMenuProps> = ({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 bg-gray-800 text-white p-2 rounded-full shadow-lg z-50"
+        className="bg-gray-800 text-white p-2 rounded-full shadow-lg"
       >
         <Settings className="w-6 h-6" />
       </button>
