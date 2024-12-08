@@ -34,11 +34,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   );
 
   const todaysSummary = weeks[0]?.summary.find(day => day.isToday);
-  const todaysBudget = todaysSummary?.adjustedBudget ?? baseDailyBudget;
+  const displayBudget = todaysSummary?.adjustedBudget ?? baseDailyBudget;
   const todaysSpent = todaysSummary?.spent ?? 0;
-  const budgetDifference = todaysBudget - baseDailyBudget;
-
-  const displayBudget = isNaN(todaysBudget) || todaysBudget === 0 ? baseDailyBudget : todaysBudget;
+  const budgetDifference = displayBudget - baseDailyBudget;
 
   return (
     <div className="home-content">

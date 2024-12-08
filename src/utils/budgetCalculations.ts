@@ -4,6 +4,7 @@ export interface DaySummary {
   date: Date;
   day: string;
   spent: number;
+  adjustedBudget: number;
   remainingToday: number;
   isToday: boolean;
 }
@@ -66,12 +67,17 @@ export function calculateWeeklySummaries(
       );
       
       const spent = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
-      const dailyBudgetWithCarryover = dailyBudget + (runningTotal / (7 - i));
-      const remainingToday = dailyBudgetWithCarryover - spent;
+      
+      // Calculate adjusted daily budget based on running total
+      const daysLeftInWeek = 7 - i;
+      const adjustedDailyBudget = dailyBudget + (runningTotal / daysLeftInWeek);
+      
+      // Calculate remaining for today
+      const remainingToday = adjustedDailyBudget - spent;
       const isToday = date.toDateString() === currentDate.toDateString();
       
-      // Update running total
-      runningTotal = remainingToday * (7 - i);
+      // Update running total for next day
+      runningTotal = remainingToday * daysLeftInWeek;
       
       // Get day name in correct order (Monday to Sunday)
       const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -81,6 +87,7 @@ export function calculateWeeklySummaries(
         date,
         day: dayNames[dayIndex],
         spent,
+        adjustedBudget: Math.round(adjustedDailyBudget * 100) / 100,
         remainingToday: Math.round(remainingToday * 100) / 100,
         isToday
       };
@@ -96,7 +103,7 @@ export function calculateWeeklySummaries(
     // Determine if we should show next week
     const isCurrentWeek = weekStartDate.toISOString() === currentWeekStart.toISOString();
     const isSunday = currentDate.getDay() === 0;
-    const shouldShowNext = isCurrentWeek && (weekSummary.every(day => day.spent > 0) || isSunday);
+    const shouldShowNext = isCurrentWeek && (weekSummary.some(day => day.spent > 0) || isSunday);
 
     return {
       summary: weekSummary,
@@ -109,7 +116,7 @@ export function calculateWeeklySummaries(
     };
   });
 
-  // If no weeks with transactions, return current week with carryover
+  // If no weeks with transactions, return current week
   if (weeklySummaries.length === 0) {
     return [{
       summary: Array.from({ length: 7 }, (_, i) => {
@@ -120,13 +127,15 @@ export function calculateWeeklySummaries(
         const dayIndex = (date.getDay() + 6) % 7;
         
         // Calculate daily budget with carryover
-        const dailyBudgetWithCarryover = dailyBudget + (carryOverAmount / (7 - i));
+        const daysLeftInWeek = 7 - i;
+        const adjustedDailyBudget = dailyBudget + (carryOverAmount / daysLeftInWeek);
         
         return {
           date,
           day: dayNames[dayIndex],
           spent: 0,
-          remainingToday: Math.round(dailyBudgetWithCarryover * 100) / 100,
+          adjustedBudget: Math.round(adjustedDailyBudget * 100) / 100,
+          remainingToday: Math.round(adjustedDailyBudget * 100) / 100,
           isToday
         };
       }),
