@@ -11,7 +11,8 @@ export interface DaySummary {
 export function getStartOfWeek(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = d.getDate() - day;
+  // Adjust for Monday start (Sunday is 0, we want Monday to be 0)
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1);
   d.setDate(diff);
   d.setHours(0, 0, 0, 0);
   return d;
@@ -56,9 +57,13 @@ export function calculateWeeklySummaries(
       const remainingToday = dailyBudget - spent;
       const isToday = date.toDateString() === currentDate.toDateString();
       
+      // Get day name in correct order (Monday to Sunday)
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
+      
       return {
         date,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        day: dayNames[dayIndex],
         spent,
         remainingToday,
         isToday
