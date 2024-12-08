@@ -26,12 +26,26 @@ function App() {
     setupViewportHeight();
     const storedData = localStorage.getItem('budgetAppData');
     if (storedData) {
-      setAppData(JSON.parse(storedData));
+      const parsedData = JSON.parse(storedData);
+      // Convert transaction dates back to Date objects
+      parsedData.transactions = parsedData.transactions.map((t: any) => ({
+        ...t,
+        date: new Date(t.date)
+      }));
+      setAppData(parsedData);
     }
   }, []);
 
   const saveDataLocally = useCallback((data: AppData) => {
-    localStorage.setItem('budgetAppData', JSON.stringify(data));
+    // Convert dates to ISO strings for storage
+    const storageData = {
+      ...data,
+      transactions: data.transactions.map(t => ({
+        ...t,
+        date: t.date.toISOString()
+      }))
+    };
+    localStorage.setItem('budgetAppData', JSON.stringify(storageData));
   }, []);
 
   const calculateDailyBudget = useCallback((income: number, expenses: Expense[]) => {
@@ -74,7 +88,7 @@ function App() {
 
   const addTransaction = useCallback((amount: number) => {
     const transaction: Transaction = {
-      date: virtualDate.toISOString().split('T')[0],
+      date: virtualDate,
       amount,
       category: 'Quick Entry',
     };

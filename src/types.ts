@@ -6,7 +6,7 @@ export interface Expense {
 }
 
 export interface Transaction {
-  date: string;
+  date: Date;
   amount: number;
   category: string;
 }
@@ -16,5 +16,5 @@ export interface AppData {
   income: number;
   dailyBudget: number;
   transactions: Transaction[];
-  username: string; // Add username to app data
+  username: string;
 }
